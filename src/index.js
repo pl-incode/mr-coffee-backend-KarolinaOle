@@ -21,13 +21,13 @@ app.get("/schedules", (req, res) => {
 
 app.get("/users/:id", (req, res) => {
   const idNumber = req.params.id;
-  idNumber >= myData.users.length?res.json("No such a user"):res.json(myData.users[idNumber]);
+  idNumber >= myData.users.length?res.json("No such user"):res.json(myData.users[idNumber]);
 });
 
 app.get("/users/:id/schedules", (req, res) => {
   const idNumber = req.params.id;
   if (idNumber >= myData.users.length){
-    res.json("No such a user");
+    res.json("No such user");
     return;}
   const arr=[];
   for ( let i = 0; i < myData.schedules.length; i ++){
@@ -37,7 +37,7 @@ app.get("/users/:id/schedules", (req, res) => {
   }
 
   if (arr.length<1) {
-    res.json("zapisz się na termin");
+    res.json("Make an appointemnt here");
     return;
   }
   res.json(arr);
