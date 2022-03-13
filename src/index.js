@@ -1,72 +1,99 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const myData = require("./data");
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const myData = require('./data');
 const app = express();
+const sha256 = require('js-sha256');
+const mustacheExpress = require('mustache-express');
+
+app.set('views', `${__dirname}/../views`);
+app.set('view engine', 'mustache');
+app.engine('mustache', mustacheExpress());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false})); 
-const sha256 = require('js-sha256');
+const { Pool } = require('pg')
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'walmart',
+    password: '',
+    port: 5432,
+  })
+  
+app.get('/', (req, res, next) => {              
+    res.render('Welcome', {'Welcome': 'Welcome on our website'});
+  });
 
-
-app.get("/", (req, res) => {
-  res.json("Welcome to our schedule website");
-});
-
-app.get("/users", (req, res) => {
-  res.json(myData.users); 
-});
-
-app.get("/schedules", (req, res) => {
-  res.json(myData.schedules); 
-});
-
-app.get("/users/:id", (req, res) => {
-  const idNumber = req.params.id;
-  idNumber >= myData.users.length?res.json("No such user"):res.json(myData.users[idNumber]);
-});
-
-app.get("/users/:id/schedules", (req, res) => {
-  const idNumber = req.params.id;
-  if (idNumber >= myData.users.length){
-    res.json("No such user");
-    return;}
-  const arr=[];
-  for ( let i = 0; i < myData.schedules.length; i ++){
-    if (idNumber==myData.schedules[i].user_id){
-      arr.push(myData.schedules[i]);
+app
+  .route('/users')
+  .get((req, res, next) => {
+    const usersNumber = [...myData.users];                  
+      for (let i=0; i<usersNumber.length; i++) {
+          usersNumber[i].id = i;                     
     }
-  }
-
-  if (arr.length<1) {
-    res.json("Make an appointemnt here");
-    return;
-  }
-  res.json(arr);
-});
-
-app.post('/users', (req, res) => {
-  const newUser = req.body;
-  const b = {
-    "firstname": newUser.firstname,
-    "lastname": newUser.lastname,
-    "email": newUser.email,
-    "password": sha256(newUser.password)
-  }
-  myData.users.push(b);
-  res.json(b);
+    res.render('users', {'Title': 'List of users', 'user': usersNumber,
+  })
 })
+  .post((req, res) => {
+    res.json(req.body)
+    myData.users.push(req.body)
+    res.redirect('/users/$(users/lenght-1)}')
+  })
 
-app.post('/schedules', (req, res) => {
-  const newSchedule = req.body;
-  const b = {
-    "user_id": parseInt(newSchedule.user_id),
-    "day": parseInt(newSchedule.day),
-    "start_at": newSchedule.start_at,
-    "end_at": newSchedule.end_at
-  }
-  myData.schedules.push(b);
-  res.json(b);
-})
+  app
+  .route('/users/new')
+  .get((req, res, next) => {
+    res.render('newUser', {});
+  });
 
+
+app
+  .route('/schedules')
+  .get((req, res, next) => {                                 
+    res.render('schedules', {
+      'Title': 'List of schedules',
+      'schedule': myData.schedules,
+    })
+  })
+  .post((req, res) => {
+    res.json(req.body)
+    myData.schedules.push(req.body)
+  })
+
+app
+  .route('/users/:id')
+  .get((req, res, next) => {
+    const idNumber = req.params.id;
+    idNumber >= myData.users.length ? res.render('user', {'Title':'No such user'}) : res.render('user', {'Title': `User ${idNumber}`, 'user': myData.users[idNumber]});
+  });
+
+app
+  .route('/users/:id/schedules')
+  .get((req, res, next) => {
+    const idNumber = req.params.id;
+    if (idNumber >= myData.users.length){
+      res.render('schedule', {'Title': 'No such user'});
+      return;}
+    const arr=[];
+    for ( let i = 0; i < myData.schedules.length; i ++){
+      if (idNumber==myData.schedules[i].user_id){
+        arr.push(myData.schedules[i]);
+      }
+    }
+    if (arr.length<1) {
+      res.render('schedule', {'Title': 'Make an appointemnt'});
+      return;
+    }
+    res.render('schedule', {'Title': `User ${idNumber} schedule`, 'schedule': arr });
+  });
+
+  app
+    .route('/schedules/new')
+    .get((req, res, next) => {
+      res.render('newSchedule', {});
+    });
+
+ 
 app.listen(3000, () => {
-  console.log(`http://localhost:4000/ is waiting for requests.`);
+  console.log(`http://localhost:3000/ is waiting for requests.`);
 });
