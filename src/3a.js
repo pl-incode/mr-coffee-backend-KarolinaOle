@@ -4,16 +4,14 @@ const myData = require("./data");
 const sha256 = require('js-sha256');
 const app = express();
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));  // nie wiem co to robi
-
+app.use(bodyParser.urlencoded({extended: false}));
 
 app.get("/", (req, res, next) => {              
   res.render("Welcome", {"Welcome": "Witaj naszej stronie"});
 });
 
-
-app.get("/users", (req, res) => {     //zwraca liste uzytkowników-
-      const usersNumber = [...myData.users];
+app.get("/users", (req, res) => {    
+    const usersNumber = [...myData.users];
     for (let i=0; i<usersNumber.length; i++) {
         usersNumber[i].idNumber = i;                  
     }
@@ -21,43 +19,38 @@ app.get("/users", (req, res) => {     //zwraca liste uzytkowników-
 });
 
 app.get("/schedules", (req, res) => {
-  res.json(myData.schedules); //zwraca liste terminow 
+  res.json(myData.schedules); 
 }); 
 
-        
 app.get("/users/:id", (req, res) => {
   const idNumber = req.params.id;
   if (idNumber >= myData.users.length){
-    // console.log("No such a user");
     res.json("No such a user");
-  return;}
+  return;
+  }
   res.json(myData.users[idNumber]);
 });  
-
-
-
 
 app.get("/users/:id/schedules", (req, res) => {
   const idNumber = req.params.id;
   if (idNumber >= myData.users.length){
-    // console.log("No such a user");
     res.json("No such a user");
-  return;}
+  return;
+  }
+
   const arr=[];
   for ( let i = 0; i < myData.schedules.length; i ++){
     if (idNumber==myData.schedules[i].user_id){
       arr.push(myData.schedules[i]);
     }
-  
   }
+  
   if (arr.length<1) {
     res.json("zapisz się na termin");
     return;
   }
   res.json(arr);
 });  
-
-
 
 app.post('/users', (req, res) => { 
   const newUser = req.body;
@@ -67,11 +60,9 @@ app.post('/users', (req, res) => {
     "email": newUser.email,
     "password": sha256(newUser.password)
   }
-  //newUser.password = sha256(newUser.password);
   myData.users.push(b);
   res.json(b);
 })
-
 
 app.post('/schedules', (req, res) => {
   const newSchedule = req.body;
